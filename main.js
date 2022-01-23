@@ -404,6 +404,10 @@ break;
               `${this.activeSessionId}_${questionId}_csharp_code`,
               codeResult,
             )
+            localStorage.setItem(
+              `${this.activeSessionId}_${questionId}_lang`,
+              'csharp',
+            )
             window.location.href = `/problems/${questionSlug}/`
           } else {
             console.log('答案已提交,上方是答案详情,点击下方链接可查看提交详情')
