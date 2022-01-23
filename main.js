@@ -293,7 +293,7 @@ break;
   /// </summary>
   /// <param name="base64Data">波粒二象性字符串</param>
   /// <returns></returns>
-  private static List<T>  RepeatedTransverseJumpAlgorithm<T>(string base64Data)
+  private static List<T>  RepetitionSideStepAlgorithm<T>(string base64Data)
         {
             var bytes = Convert.FromBase64String(base64Data);
             using (var stream = new System.IO.Compression.GZipStream(new MemoryStream(bytes), System.IO.Compression.CompressionMode.Decompress))
@@ -325,7 +325,7 @@ break;
     public class Solution {       
     ${this.cSharpUnZipMethodStr} 
     private static int _aUnICounter=0;
-    private static readonly List<${codeInfo.returnType}> _result= RepeatedTransverseJumpAlgorithm<${codeInfo.returnType}>("${zipStr}");
+    private static readonly List<${codeInfo.returnType}> _result= RepetitionSideStepAlgorithm<${codeInfo.returnType}>("${zipStr}");
         ${methodName}
         {
             return _result[_aUnICounter++];
