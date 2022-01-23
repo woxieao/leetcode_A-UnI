@@ -43,11 +43,11 @@ class AUnI {
       try {
         return await (await fetch(options.url, options)).json()
       } catch {
-        //冷却一下,以免报请求太多的异常
-        await new Promise((resolve) => setTimeout(resolve, 3000))
         console.log(
-          `这算法太顶了,服务器hold不住啦!正在重新发送(剩余${i - 1}次重试)`,
+          `小场面,这算法太顶,服务器hold不住\n正在重新发送(剩余${i - 1}次重试)`,
         )
+        //冷却一下,以免报请求太多的异常
+        await new Promise((resolve) => setTimeout(resolve, 5000))
       }
     }
     console.error(`请求${options.url}失败`)
@@ -225,6 +225,10 @@ class AUnI {
           }
         }
       } else {
+        if (json.error) {
+          throw `翻车了...${json.error}`
+        }
+        console.log('服务器正在对代码进行图灵检测...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
     }
@@ -242,8 +246,15 @@ class AUnI {
 
   //答案太长了需要压缩一下否则leetcode会报错,但是这样的话每次解压缩,序列化又很浪费内存和时间,后期可以加个判断超长的才压缩
   async zip2Base64String(dataStr) {
-    var bytes = await this.compress(dataStr, 'gzip')
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(bytes)))
+    var buffer = await this.compress(dataStr, 'gzip')
+    var binaryStr = ''
+    var bytes = new Uint8Array(buffer)
+    var len = bytes.byteLength
+
+    for (var i = 0; i < len; i++) {
+      binaryStr += String.fromCharCode(bytes[i])
+    }
+    return btoa(binaryStr)
   }
 
   transfer2AUnICode(codeInfo) {
@@ -354,6 +365,57 @@ break;
     }
   }
 
+  async publishSolutionArticle(questionSlug, codeContent) {
+    var title = '这题很简单,用我的通用人工智障算法就能实现O(1)复杂度的解法'
+    var json = await this.query({
+      data: {
+        operationName: 'autoSaveSolutionArticle',
+        variables: {
+          data: {
+            title: title,
+            content: '',
+            questionSlug: questionSlug,
+            tags: ['csharp', 'javascript'],
+          },
+        },
+        query:
+          'mutation autoSaveSolutionArticle($data: AutoSaveSolutionArticleInput!) {\n  autoSaveSolutionArticle(data: $data) {\n    ok\n    error\n    article {\n      slug\n      __typename\n    }\n    __typename\n  }\n}\n',
+      },
+    })
+    
+    await this.query({
+      data: {
+        operationName: 'publishSolutionArticle',
+        variables: {
+          data: {
+            enableReward: false,
+            title: title,
+            content:
+              '\r\n自动生成的解法如下\r\n\r\n\r\n```csharp []\r\n' +
+              codeContent +
+              "\r\n```\r\n\r\n可以解几乎所有热门的算法题(无论简单还是困难难度)的人工智障算法,使用方法如下\r\n\r\n复制下面这段代码  按F12 打开你的浏览器的控制台Console栏 输入回车即可自动生成代码解法\r\n\r\n```javascript []\r\n//copy这段去去控制台运行\r\nif(location.host.indexOf(\"leetcode\")===-1)\r\n{\r\n  alert('请在LeetCode习题页重新运行本代码');\r\n  location.href =  '//leetcode-cn.com/problems/two-sum/';\r\n}\r\n\r\nvar aUnIScriptId = 'aUnIScript'\r\nvar existingScript = document.getElementById(aUnIScriptId)\r\nif (!existingScript || existingScript.length === 0) {\r\n  var aUnIScript = document.createElement('script')\r\n  aUnIScript.id = aUnIScriptId\r\n  aUnIScript.src = 'https://a-uni.oss-cn-hangzhou.aliyuncs.com/leetcode/main.js'\r\n  document.head.appendChild(aUnIScript)\r\n  aUnIScript.onload = function () {\r\n    leetCodeAUnI.engage()\r\n  }\r\n} else {\r\n  await leetCodeAUnI.engage()\r\n}\r\n\r\n```\r\n效果图\r\n![leetcode1.jpg](https://pic.leetcode-cn.com/1642966019-WllFYC-leetcode1.jpg)\r\n![leetcode2.jpg](https://pic.leetcode-cn.com/1642966024-DgszjM-leetcode2.jpg)\r\n不好用来打我\r\n\r\n",
+            slug: json.data.autoSaveSolutionArticle.article.slug,
+            questionSlug: questionSlug,
+            tags: ['csharp', 'javascript'],
+            thumbnail: '',
+            summary:
+              '自动生成的解法如下\n可以解几乎所有热门的算法题(无论简单还是困难难度)的人工智障算法,使用方法如下\n复制下面这段代码  按F12 打开你的浏览器的控制台Console栏 输入回车即可\n不好用来打我',
+            mentionedUserSlugs: [],
+          },
+        },
+        query:
+          'mutation publishSolutionArticle($data: PublishSolutionArticleInput!) {\n  publishSolutionArticle(data: $data) {\n    ok\n    error\n    article {\n      content\n      title\n      slug\n      tags {\n        name\n        slug\n        nameTranslated\n        __typename\n      }\n      question {\n        questionTitleSlug\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n',
+      },
+    })
+  }
+
+  async showMsg(msg, times) {
+    for (var i = times; i > 0; i--) {
+      console.log(`${msg}${i}`)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+  }
+
   async engage(questionSlug) {
     await this.getSessionId()
     questionSlug = questionSlug || this.questionSlug
@@ -376,8 +438,10 @@ break;
         )
         if (submitResult.isCorrectAnswer) {
           codeInfo.testCaseCount = submitResult.totalTestcases
-          console.log(`正在生成人工智障代码...(版本号:V${sId + 1})`)
-
+          await this.showMsg(
+            `正在生成人工智障代码...(版本号:V${sId + 1})\n预计还需等待`,
+            5,
+          )
           var answersStr = await this.submitAndGetResult(
             questionSlug,
             this.transfer2AUnICode(codeInfo),
@@ -390,8 +454,7 @@ break;
             answersStr,
             methodName,
           )
-          console.log('正在提交图灵完备的代码...')
-
+          await this.showMsg('准备提交图灵完备的代码,倒计时', 5)
           var lastSubmissionId = await this.submitAndGetResult(
             questionSlug,
             codeResult,
@@ -399,7 +462,8 @@ break;
             methodName,
           )
           console.log(codeResult)
-          if (confirm('是否查看提交结果')) {
+          if (confirm('是否发表题解,并且查看生成结果?')) {
+            await this.publishSolutionArticle(questionSlug, codeResult)
             localStorage.setItem(
               `${this.activeSessionId}_${questionId}_csharp_code`,
               codeResult,
