@@ -9,16 +9,16 @@ a leetcode artificial unintelligence Time complexity O(1) code auto generator
 //copy to browser console to run
 
 
-var aUnIScriptId = 'aUnIScript'
-var existingScript = document.getElementById(aUnIScriptId)
+var aUnIScriptId = 'aUnIScript';
+var existingScript = document.getElementById(aUnIScriptId);
 if (!existingScript || existingScript.length === 0) {
-  var aUnIScript = document.createElement('script')
-  aUnIScript.id = aUnIScriptId
-  aUnIScript.src = 'https://a-uni.oss-cn-hangzhou.aliyuncs.com/leetcode/main.js'
-  document.head.appendChild(aUnIScript)
+  var aUnIScript = document.createElement('script');
+  aUnIScript.id = aUnIScriptId;
+  aUnIScript.src = 'https://a-uni.oss-cn-hangzhou.aliyuncs.com/leetcode/main.js';
+  document.head.appendChild(aUnIScript);
   aUnIScript.onload = function () {
-    leetCodeAUnI.engage()
+    leetCodeAUnI.engage();
   }
 } else {
-  await leetCodeAUnI.engage()
+  await leetCodeAUnI.engage();
 }
